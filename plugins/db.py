@@ -1,6 +1,7 @@
 import sys
 import random
 import pymongo
+import secrets
 from datetime import datetime
 from discord.ext import commands
 
@@ -33,8 +34,7 @@ class DB_Plugin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = self.bot.db.data
-        print(self.bot.db)
-        print(f'Cog "{self.qualified_name}" loaded')
+        print(f'Plugin "{self.qualified_name}" loaded')
 
     async def db_create_group(self, ctx, name):
         """
@@ -42,6 +42,7 @@ class DB_Plugin(commands.Cog):
         """
         id = self.db.insert_one({
             "name": name,
+            "group-id": secrets.token_hex(3), # I forsee conflicts in db but enough entropy ig so it's ok
             "code": random.randrange(1000, 9999),
             "members": [
                 { 
