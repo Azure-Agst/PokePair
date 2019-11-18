@@ -1,8 +1,6 @@
 import sys
 import random
 import pymongo
-import secrets
-from datetime import datetime
 from discord.ext import commands
 
 class DB_Conn():
@@ -36,21 +34,21 @@ class DB_Plugin(commands.Cog):
         self.db = self.bot.db.data
         print(f'Plugin "{self.qualified_name}" loaded')
 
-    async def db_create_group(self, ctx, name):
+    async def db_create_group(self, ctx, name, ts, g_id, code, tc_id, vc_id, em_id):
         """
         Creates an entry in the database for a group
         """
         id = self.db.insert_one({
             "name": name,
-            "group-id": secrets.token_hex(3), # I forsee conflicts in db but enough entropy ig so it's ok
-            "code": random.randrange(1000, 9999),
+            "group-id": g_id,
+            "code": code,
             "members": [
-                { 
-                    "name": ctx.author.display_name,
-                    "id": ctx.author.id
-                }
+                ctx.author.id
             ],
-            "timestamp": datetime.now()
+            "text": tc_id,
+            "voice": vc_id,
+            "embed-id": em_id,
+            "timestamp": ts
         }).inserted_id
 
         result = self.db.find_one({"_id": id})
@@ -58,4 +56,15 @@ class DB_Plugin(commands.Cog):
             print("Error making group: {}".format(name))
             await ctx.author.send("Something went terribly wrong! Try again in a second!")
         return result
+
+    async def db_find_group_by_chat(self, tc_id):
+        """
+        Creates an entry in the database for a group
+        """
+        return self.db.find_one({"text": tc_id})
     
+    async def db_delete_group(self, g_id):
+        """
+        Deletes an entry in the database for a group
+        """
+        return self.db.delete_one({"group-id": g_id})
