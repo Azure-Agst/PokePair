@@ -8,11 +8,11 @@ import configparser
 from discord.ext import commands
 from datetime import datetime
 from aiohttp.client_exceptions import ClientConnectorError
+from plugins.db import DB_Conn
 
 # Load config.ini
 config = configparser.ConfigParser()
 config.read('config.ini')
-bot = commands.Bot(command_prefix=config['Discord']['prefix'])
 
 # plugins
 plugins = [
@@ -35,9 +35,12 @@ class PokePair(commands.Bot):
         self.failed_plugins = []
         self.exitcode = 0
 
+        # for database
+        self.db = None
+
         # channels
         self.channels = {
-            'bot-test': None
+            'bot_test': None
         }
 
     def load_plugins(self):
@@ -58,6 +61,13 @@ class PokePair(commands.Bot):
             if not self.channels[n]:
                 print(f'Failed to find channel {n}')
 
+        # Initialize database
+        self.db = DB_Conn(config['Mongo']['uri'])
+        await self.db.connect()
+
+        # load plugins
+        self.load_plugins()
+
         # Set status
         game = discord.Game(config['Discord']['status'])
         await self.change_presence(status=discord.Status.online, activity=game)
@@ -69,25 +79,25 @@ class PokePair(commands.Bot):
         if len(self.failed_plugins) != 0:
             startup_message += "\n\nSome addons failed to load:"
             for f in self.failed_plugins:
-                startup_message += "\n{}: `{}: {}`".format(*f)
-            startup_message += "\n\n"
+                startup_message += "\n- *{}*: `{}: {}`".format(*f)
+            startup_message += "\n"
 
         # send startup message
         print(startup_message)
-        await self.channels['bot-test'].send(startup_message)
+        await self.channels['bot_test'].send(startup_message)
 
 
 
 def main():
     """Main function to run the bot"""
-    bot = PokePair('!', description="Kurisu, the bot for Nintendo Homebrew!")
+    bot = PokePair('!', description="PokePair, the bot for the Pokemon SwSh LFG server!")
     print("Loading PokePair...")
-    bot.load_plugins()
 
     try:
         bot.run(config['Discord']['token'])
     except ClientConnectorError as e:
         print("GetAddrInfo failed. Try launching again. :/")
+        sys.exit()
 
     return bot.exitcode
 
