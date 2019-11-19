@@ -18,7 +18,8 @@ config.read('config.ini')
 plugins = [
     #"plugins.database",
     #"plugins.admin",
-    "plugins.groups"
+    "plugins.groups",
+    "plugins.roles",
 ]
 
 class PokePair(commands.Bot):
@@ -40,7 +41,8 @@ class PokePair(commands.Bot):
 
         # channels
         self.channels = {
-            'bot_test': None
+            'bot_test': None,
+            'roles': None
         }
 
     def load_plugins(self):
@@ -50,6 +52,10 @@ class PokePair(commands.Bot):
             except BaseException as e:
                 #print(f'{plugin} failed to load')
                 self.failed_plugins.append([plugin, type(e).__name__, e])
+    
+    def init_db(self):
+        self.db = DB_Conn(config['Mongo']['uri'])
+        self.db.connect()
 
     async def on_ready(self):
         # Check for only one server
@@ -62,18 +68,18 @@ class PokePair(commands.Bot):
                 print(f'Failed to find channel {n}')
 
         # Initialize database
-        self.db = DB_Conn(config['Mongo']['uri'])
-        await self.db.connect()
+        # self.db = DB_Conn(config['Mongo']['uri'])
+        # await self.db.connect()
 
         # load plugins
-        self.load_plugins()
+        #self.load_plugins()
 
         # Set status
         game = discord.Game(config['Discord']['status'])
         await self.change_presence(status=discord.Status.online, activity=game)
 
         # start startup message
-        startup_message = f'{self.user.name} has started! {self.guild} has {self.guild.member_count:,} members!'
+        startup_message = f'{self.user.name} has started! Server {self.guild} has {self.guild.member_count:,} members!'
 
         # check for failed plugins
         if len(self.failed_plugins) != 0:
@@ -90,8 +96,10 @@ class PokePair(commands.Bot):
 
 def main():
     """Main function to run the bot"""
-    bot = PokePair('!', description="PokePair, the bot for the Pokemon SwSh LFG server!")
     print("Loading PokePair...")
+    bot = PokePair('!', description="PokePair, the bot for the Pokemon SwSh LFG server!")
+    bot.init_db()
+    bot.load_plugins()
 
     try:
         bot.run(config['Discord']['token'])

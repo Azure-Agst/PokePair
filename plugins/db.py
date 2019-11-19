@@ -12,7 +12,7 @@ class DB_Conn():
         self._dbcon = None
         self.data = None
 
-    async def connect(self):
+    def connect(self):
         """
         Connects the DB_Conn object to the database
         """
