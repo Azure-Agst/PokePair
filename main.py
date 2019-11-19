@@ -1,9 +1,6 @@
-import os
 import sys
 import signal
-import random
 import discord
-import pymongo
 import configparser
 from discord.ext import commands
 from datetime import datetime
@@ -13,14 +10,8 @@ from plugins.db import DB_Conn
 # Load config.ini
 config = configparser.ConfigParser()
 config.read('config.ini')
+plugins = config['Discord']['plugins'].split(",")
 
-# plugins
-plugins = [
-    #"plugins.database",
-    #"plugins.admin",
-    "plugins.groups",
-    "plugins.roles",
-]
 
 class PokePair(commands.Bot):
     """Main Bot Class"""
@@ -50,7 +41,7 @@ class PokePair(commands.Bot):
             try:
                 self.load_extension(plugin)
             except BaseException as e:
-                #print(f'{plugin} failed to load')
+                # print(f'{plugin} failed to load')
                 self.failed_plugins.append([plugin, type(e).__name__, e])
     
     def init_db(self):
@@ -93,7 +84,6 @@ class PokePair(commands.Bot):
         await self.channels['bot_test'].send(startup_message)
 
 
-
 def main():
     """Main function to run the bot"""
     print("Loading PokePair...")
@@ -103,21 +93,20 @@ def main():
 
     try:
         bot.run(config['Discord']['token'])
-    except ClientConnectorError as e:
+    except ClientConnectorError:
         print("GetAddrInfo failed. Try launching again. :/")
         sys.exit()
 
     return bot.exitcode
 
-#
-# Wrapping things up...
-#
-def exit(signal, frame):
+
+def exit_bot(signal, frame):
     print("Shutting down bot...")
     sys.exit()
+
+
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, exit)
+    signal.signal(signal.SIGINT, exit_bot)
     exit(main())
-    
 
 # db.searchArrayDemo.find({EmployeeDetails:{$elemMatch:{EmployeePerformanceArea : "C++", Year : 1998}}}).pretty();

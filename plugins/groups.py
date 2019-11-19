@@ -5,11 +5,12 @@ from discord.ext import commands
 from plugins.db import DB_Plugin
 from datetime import datetime
 
+
 class Groups(DB_Plugin):
     @commands.command()
-    async def group(self, ctx, *, arg):    
+    async def group(self, ctx, *, arg):
         if isinstance(ctx.channel, discord.DMChannel):
-                await ctx.send("We currently don't support making groups in DMs. Hop into our server and try again!")
+            await ctx.send("We currently don't support making groups in DMs. Hop into our server and try again!")
         else:
 
             # group creation
@@ -18,7 +19,7 @@ class Groups(DB_Plugin):
                 # generate important data
                 name = ' '.join(arg.split()[1:])
                 timestamp = datetime.now()
-                group_id = secrets.token_hex(3) # I forsee conflicts in db but enough entropy ig so it's ok
+                group_id = secrets.token_hex(3)  # I forsee conflicts in db but enough entropy ig so it's ok
                 join_code = random.randrange(1000, 9999)
 
                 # alert user
@@ -31,27 +32,26 @@ class Groups(DB_Plugin):
                     ctx.author: discord.PermissionOverwrite(read_messages=True, connect=True),
                     ctx.guild.me: discord.PermissionOverwrite(administrator=True, read_messages=True, connect=True)
                 }
-                text = await ctx.guild.create_text_channel(name+"-"+group_id, category=category, overwrites=overwrites)
-                voice = await ctx.guild.create_voice_channel(name+" - "+group_id, category=category, overwrites=overwrites)
+                text = await ctx.guild.create_text_channel(name + "-" + group_id, category=category, overwrites=overwrites)
+                voice = await ctx.guild.create_voice_channel(name + " - " + group_id, category=category, overwrites=overwrites)
 
                 # make embed and send
                 embed = discord.Embed(
-                    title = "PokePair - {}".format(name),
-                    description = "Made at: {}".format(timestamp),
-                    color = discord.Color.blue()
+                    title="PokePair - {}".format(name),
+                    description="Made at: {}".format(timestamp),
+                    color=discord.Color.blue()
                 )
                 embed.set_footer(text="PokePair", icon_url="https://cdn.discordapp.com/avatars/645769421486424103/77b0befead90b9ec147304f312514f21.png?size=256")
                 embed.add_field(name="Group ID:", value=group_id)
                 embed.add_field(name="Code:", value=join_code)
-                embed.add_field(name="Members:", value="• {}\n• {}\n• {}\n• {}".format(ctx.author.display_name,"N/A","N/A","N/A"))
+                embed.add_field(name="Members:", value="• {}\n• {}\n• {}\n• {}".format(ctx.author.display_name, "N/A", "N/A", "N/A"))
                 await text.send(f"Hey, {ctx.author.mention}, here's your group channel! We also made a voice channel for your members!")
                 embed = await text.send(embed=embed)
-                await text.send(f"Tell your friends to join by using `!group join {join_code}` in chat!")   
+                await text.send(f"Tell your friends to join by using `!group join {join_code}` in chat!")
 
                 # add records to the database
-                result = await self.db_create_group(ctx, name, timestamp, group_id, join_code, text.id, voice.id, embed.id)
-            # end group create 
-
+                await self.db_create_group(ctx, name, timestamp, group_id, join_code, text.id, voice.id, embed.id)
+            # end group create
 
             # Group Deletion
             elif arg.split(" ")[0] == "delete":
@@ -73,14 +73,12 @@ class Groups(DB_Plugin):
                     await self.db_delete_group(group['group-id'])
                 else:
                     await ctx.send("Are you absolutely sure you want to delete this group? Use `!group delete confirm` to confirm your request.")
-            # end group delete 
-
+            # end group delete
 
             # TODO: Group Join
             # TODO: Group Leave
 
             # TODO: Update Embed
-
 
             else:
                 await ctx.send("Command {} not found! Check your syntax and try again!".format(arg.split(" ")[0]))
@@ -91,6 +89,7 @@ class Groups(DB_Plugin):
             await ctx.send("We currently don't support making groups in DMs. Hop into our server and try again!")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send('Seems a few arguments are missing! Check your syntax and try again!')
+
 
 def setup(bot):
     bot.add_cog(Groups(bot))
