@@ -1,7 +1,7 @@
 import sys
-import random
 import pymongo
 from discord.ext import commands
+
 
 class DB_Conn():
     """
@@ -19,11 +19,12 @@ class DB_Conn():
         try:
             self._dbcon = pymongo.MongoClient(self.uri, serverSelectionTimeoutMS=5000)
             self._dbcon.server_info()
-            print('Connected to DB!') 
+            print('Connected to DB!')
         except pymongo.errors.ServerSelectionTimeoutError as err:
             print(err)
             sys.exit()
         self.data = self._dbcon['pokepair']['groups']
+
 
 class DB_Plugin(commands.Cog):
     """
@@ -62,7 +63,7 @@ class DB_Plugin(commands.Cog):
         Creates an entry in the database for a group
         """
         return self.db.find_one({"text": tc_id})
-    
+
     async def db_delete_group(self, g_id):
         """
         Deletes an entry in the database for a group
